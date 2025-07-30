@@ -1,0 +1,92 @@
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 200vh;
+}
+
+#headerBar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4rem;
+  background: rgba(0,0,0,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 20;
+  transition: opacity 0.2s ease-out;
+}
+
+.hero-container {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.bg-layer {
+  position: absolute;
+  top: 8vw;
+  bottom: 8vw;
+  left: 5vw;
+  right: 5vw;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  will-change: opacity, transform;
+  filter: brightness(1.15) contrast(1.1);
+}
+
+.bg-cross { background-image: url('../images/cross.png'); }
+.bg-psa   { background-image: url('../images/BG-psa22.png'); }
+.bg-gen   { background-image: url('../images/BG-gen.png'); }
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom,
+    rgba(0,0,0,0.5),   /* was 0.8, now more transparent */
+    rgba(0,0,0,0.1),   /* was 0.4, now more transparent */
+    rgba(0,0,0,0.35)    /* was 0.8, now more transparent */
+  );
+  z-index: 4;
+}
+
+#heroText {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+  color: white;
+  font-family: serif;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+  transition: opacity 0.1s linear;
+  font-size: 5vw;
+  text-align: center;
+  padding: 0 2vw;
+  width: 90vw;
+  max-width: 1000px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  #headerBar {
+    height: 3rem;
+    font-size: 1rem;
+  }
+  .bg-layer {
+    top: 12vw;
+    bottom: 12vw;
+    left: 2vw;
+    right: 2vw;
+  }
+  #heroText {
+    font-size: 10vw;
+    padding: 0 4vw;
+    width: 96vw;
+  }
+}
