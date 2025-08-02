@@ -25,6 +25,7 @@ body, html {
   top: 0;
   height: 100vh;
   overflow: hidden;
+  /* position: relative; */
 }
 
 .bg-layer {
@@ -43,6 +44,15 @@ body, html {
 .bg-cross { background-image: url('../images/cross.png'); }
 .bg-psa   { background-image: url('../images/BG-psa22.png'); }
 .bg-gen   { background-image: url('../images/BG-gen.png'); }
+.bg-comingsoon {
+  background-image: url('../images/BG-comingsoon.png');
+  top: 21vw;
+  bottom: 21vw;
+  left: 21vw;
+  right: 21vw;
+  background-size: contain;
+}
+/* .bg-extra { background-image: url('../images/BG-extra.png'); } */
 
 .overlay {
   position: absolute;
