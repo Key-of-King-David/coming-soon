@@ -179,13 +179,16 @@ function initializeStrongClicks() {
 // ————————————————————————————————————————————
 // Main: load & render the selected chapter
 async function displayChapter() {
-  const bookId = document.getElementById('book-select').value;
+  const bookSel = document.getElementById('book-select');
   const chapter = document.getElementById('chapter-input').value;
   const out = document.getElementById('scripture-container');
   out.textContent = 'Loading…';
 
+  // Get the selected option's text (the book name)
+  const bookName = bookSel.selectedOptions[0].textContent;
+
   try {
-    const latex = await fetchChapterLaTeX(bookId, chapter);
+    const latex = await fetchChapterLaTeX(bookName, chapter); // use bookName, not bookId
     const parsed = parseSwordLaTeX(latex);
     const html = renderSwordHTML(parsed);
     out.innerHTML = '';
@@ -236,5 +239,43 @@ window.addEventListener('DOMContentLoaded', async () => {
   populateBookDropdown();
 
   document.getElementById('bible-select').addEventListener('change', populateBookDropdown);
-  document.getElementById('load-btn').addEventListener('click', displayChapter);
+  document.getElementById('load-btn').addEventListener('click', () => {
+    const menuPanel = document.getElementById('menu-panel');
+    const controls = document.querySelector('.controls');
+
+    // Collapse both menus if open
+    if (menuPanel && menuPanel.classList.contains('open')) {
+      menuPanel.classList.remove('open');
+    }
+    if (window.innerWidth <= 600 && controls) {
+      controls.classList.remove('open');
+    }
+    displayChapter();
+  });
+
+  // Hamburger menu toggle
+  const menuToggle = document.getElementById('menu-toggle');
+  const menuPanel  = document.getElementById('menu-panel');
+
+  if (menuToggle && menuPanel) {
+    menuToggle.addEventListener('click', () => {
+      menuPanel.classList.toggle('open');
+    });
+  }
+
+  const ctrlToggle = document.getElementById('ctrl-toggle');
+  const controls   = document.querySelector('.controls');
+  const loadBtn    = document.getElementById('load-btn');
+
+  // Hamburger toggles controls panel
+  ctrlToggle.addEventListener('click', function() {
+    controls.classList.toggle('open');
+  });
+
+  // When "Load Chapter" is clicked, collapse controls on mobile
+  loadBtn.addEventListener('click', function() {
+    if (window.innerWidth <= 600) {
+      controls.classList.remove('open');
+    }
+  });
 });

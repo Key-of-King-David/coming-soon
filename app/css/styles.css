@@ -303,3 +303,12 @@ button:hover {
   }
 }
 
+/* Example CSS */
+.menu-panel {
+  display: none;
+  /* other styles for mobile menu */
+}
+.menu-panel.open {
+  display: block;
+}
+
