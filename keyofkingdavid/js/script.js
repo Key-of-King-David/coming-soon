@@ -1,5 +1,3 @@
-// script.js
-// ==========
 
 // 1) Your API proxy endpoint
 const API_BASE = 'https://api.keyofkingdavid.org/api';
