@@ -134,7 +134,11 @@ function renderSwordHTML(nodes) {
     } else {
       const p   = document.createElement('p');
       const sup = document.createElement('sup');
-      sup.textContent = node.number;
+      const chapterTitle = nodes.find(n => n.type === 'chapter')?.title || '';
+      const book = chapterTitle.replace(/\s*\d+$/, ''); // Remove trailing chapter number
+      const chapterNum = chapterTitle.match(/\d+$/)?.[0] || '';
+      const ref = `${book.trim()} ${chapterNum}:${node.number}`;
+      sup.innerHTML = `<a href="#" class="bible-verse-link" data-ref="${ref}">${node.number}</a>`;
       p.appendChild(sup);
       // allow HTML for clickable Strong's numbers
       const textNode = document.createElement('span');
@@ -276,6 +280,155 @@ window.addEventListener('DOMContentLoaded', async () => {
   loadBtn.addEventListener('click', function() {
     if (window.innerWidth <= 600) {
       controls.classList.remove('open');
+    }
+  });
+
+  // Cross reference click handler
+  document.querySelectorAll('.ref-link').forEach(link => {
+    link.addEventListener('click', async function(e) {
+      e.preventDefault();
+      const verse = this.textContent.split('–')[0].trim(); // e.g. "John 1:1"
+      const panel = this.closest('.panel');
+      const refArea = panel.querySelector('.ref-list-area') || (() => {
+        const d = document.createElement('div');
+        d.className = 'ref-list-area';
+        panel.appendChild(d);
+        return d;
+      })();
+      refArea.innerHTML = 'Loading cross-references…';
+
+      // Fetch cross-references
+      try {
+        const res = await fetch(`${API_BASE}/commentaries?module=TSK&strongs=${encodeURIComponent(verse)}`);
+        const data = await res.json();
+        // Extract all <scripRef>...</scripRef> as references
+        const refs = [];
+        const re = /<scripRef>(.*?)<\/scripRef>/g;
+        let m;
+        while ((m = re.exec(data.raw_html)) !== null) {
+          m[1].split(';').forEach(ref => {
+            const trimmed = ref.trim();
+            if (trimmed) refs.push(trimmed);
+          });
+        }
+        if (refs.length === 0) {
+          refArea.innerHTML = '<em>No cross-references found.</em>';
+          return;
+        }
+        // Render as hyperlinks
+        refArea.innerHTML = refs.map(r =>
+          `<a href="#" class="xref-link" data-ref="${r}">${r}</a>`
+        ).join(' | ') + '<div class="xref-verse-area" style="margin-top:1em"></div>';
+
+        // Add click handlers for xref links
+        refArea.querySelectorAll('.xref-link').forEach(xref => {
+          xref.addEventListener('click', async function(ev) {
+            ev.preventDefault();
+            const ref = this.dataset.ref;
+            const verseArea = refArea.querySelector('.xref-verse-area');
+            verseArea.textContent = 'Loading…';
+            try {
+              const verseRes = await fetch(`${API_BASE}/search?module=KJV&query=${encodeURIComponent(ref)}&output_format=plain&output_encoding=UTF8&variant=0&locale=en`);
+              const verseData = await verseRes.json();
+              verseArea.textContent = verseData.result || 'Not found.';
+            } catch (err) {
+              verseArea.textContent = 'Error loading verse.';
+            }
+          });
+        });
+      } catch (err) {
+        refArea.innerHTML = '<em>Error loading cross-references.</em>';
+      }
+    });
+  });
+  function makeTSKKey(rawRef) {
+    // 1) Trim whitespace
+    let ref = rawRef.trim();
+
+    // 2) Collapse any spaces around colons into a single colon
+    //    e.g. "John 3 : 16" → "John 3:16"
+    ref = ref.replace(/\s*:\s*/g, ':')
+
+    // 3) Ensure it ends with exactly one trailing colon:
+    if (!ref.endsWith(':')) {
+      ref = ref + ':';
+    }
+    return ref;
+  }
+  document.addEventListener('click', async function(e) {
+    // Handle verse number click in Bible content
+    if (e.target.matches('.bible-verse-link, .bible-verse-link *')) {
+      e.preventDefault();
+      const link = e.target.closest('.bible-verse-link');
+      const ref = link.dataset.ref;
+      const crossrefPanel = document.getElementById('crossref-panel');
+      const sidebarPanel = document.getElementById('sidebar-crossref');
+      crossrefPanel.innerHTML = 'Loading cross-references…';
+      sidebarPanel.innerHTML = 'Loading cross-references…';
+
+      try {
+        const key = makeTSKKey(ref);
+        const res = await fetch(`${API_BASE}/commentaries?module=TSK&strongs=${encodeURIComponent(key)}`);
+        const data = await res.json();
+
+        // Extract all <scripRef>...</scripRef> as references
+        const refs = [];
+        const re = /<scripRef>(.*?)<\/scripRef>/g;
+        let m;
+        while ((m = re.exec(data.raw_html)) !== null) {
+          m[1].split(';').forEach(r => {
+            const trimmed = r.trim();
+            if (trimmed) refs.push(trimmed);
+          });
+        }
+
+        // Render links in the crossref panel
+        const linksHtml = refs.map(r =>
+          `<a href="#" class="xref-link" data-ref="${r}">${r}</a>`
+        ).join(' | ');
+
+        crossrefPanel.innerHTML = `
+          <div class="ref-list-area">
+            <strong>Cross References for ${ref}:</strong><br>
+            ${linksHtml}
+            <div class="xref-verse-area" style="margin-top:1em"></div>
+          </div>
+        `;
+
+        // Render links in the sidebar as before
+        if (refs.length === 0) {
+          sidebarPanel.innerHTML = '<em>No cross-references found.</em>';
+        } else {
+          sidebarPanel.innerHTML = linksHtml;
+        }
+
+      } catch (err) {
+        crossrefPanel.innerHTML = '<em>Error loading cross-references.</em>';
+        sidebarPanel.innerHTML = '<em>Error loading cross-references.</em>';
+      }
+    }
+
+    // Handle click on cross-reference link (event delegation)
+    if (e.target.matches('.xref-link')) {
+      e.preventDefault();
+      const ref = e.target.dataset.ref;
+      // Find the nearest .ref-list-area (works for both sidebar and main panel)
+      const refArea = e.target.closest('.ref-list-area');
+      let verseArea = refArea.querySelector('.xref-verse-area');
+      if (!verseArea) {
+        verseArea = document.createElement('div');
+        verseArea.className = 'xref-verse-area';
+        verseArea.style.marginTop = '1em';
+        refArea.appendChild(verseArea);
+      }
+      verseArea.textContent = 'Loading…';
+      try {
+        const verseRes = await fetch(`${API_BASE}/search?module=KJV&query=${encodeURIComponent(ref)}&output_format=plain&output_encoding=UTF8&variant=0&locale=en`);
+        const verseData = await verseRes.json();
+        verseArea.textContent = verseData.result || 'Not found.';
+      } catch (err) {
+        verseArea.textContent = 'Error loading verse.';
+      }
     }
   });
 });
