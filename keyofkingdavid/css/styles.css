@@ -1,0 +1,287 @@
+/* 1. Variables */
+:root {
+  /* header gradient colors */
+  --color-header-from:   #0A0E1A;
+  --color-header-to:     #131B2D;
+
+  /* page colors */
+  --color-bg:            #fff;
+  --color-text:          #333;
+  --color-primary:       #435a72;
+  --color-highlight-bg:  rgba(0,0,0,0.9);
+
+  /* fonts */
+  --font-base:   'Segoe UI', Tahoma, Geneva, sans-serif;
+  --font-logo:   ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+
+  /* sizing */
+  --radius:           6px;
+  --spacing:          1rem;
+
+  /* layout dims */
+  --header-height:    5rem;   /* adjust if your header is taller/shorter */
+  --controls-height:  4rem;   /* height of the controls bar */
+  --sidebar-width:    25%;    /* left column width: change for a different ratio */
+}
+
+/* 2. Reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* 3. Base typography & body */
+body {
+  font-family: var(--font-base);
+  line-height: 1.6;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+
+  height: 100vh;
+  overflow: hidden;   /* disable page-level scrolling */
+}
+
+/* 4. Header (fixed at top) */
+header {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    to bottom,
+    var(--color-header-from),
+    var(--color-header-to)
+  );
+  z-index: 20;
+}
+
+header h1 {
+  font-family: var(--font-logo);
+  color: var(--color-bg);
+  font-size: 1.5rem;
+  font-weight: 400;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+}
+
+/* default—hidden off desktop */
+#ctrl-toggle {
+  display: none;
+  background: var(--color-primary);
+  color: var(--color-bg);
+  border: none;
+  padding: 0.2rem;
+  font-size: 1.1rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+
+  margin-left: 1rem;   /* push it to the far right in the header flexbox */
+}
+
+/* 5. Controls (fixed immediately under header) */
+.controls {
+  position: fixed;
+  top: var(--header-height);
+  left: var(--sidebar-width);
+  right: 0;
+  height: var(--controls-height);
+
+  display: flex;
+  align-items: center;
+  gap: calc(var(--spacing) / 2);
+  padding: 0 var(--spacing);
+  background-color: var(--color-bg);
+  border-bottom: 1px solid #eee;
+  z-index: 15;
+}
+
+select,
+input,
+button {
+  font-family: var(--font-base);
+  padding: calc(var(--spacing) / 2);
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: var(--radius);
+}
+
+button {
+  background-color: var(--color-primary);
+  color: var(--color-bg);
+  cursor: pointer;
+  border: none;
+}
+button:hover {
+  opacity: 0.9;
+}
+
+/* 6. Sidebar (fixed under header+controls) */
+.sidebar {
+  position: fixed;
+  top: calc(var(--header-height) + var(--controls-height));
+  left: 0;
+  bottom: 0;
+  width: var(--sidebar-width);
+
+  display: grid;
+  grid-template-rows: repeat(3, 1fr);
+  gap: var(--spacing);
+  padding: var(--spacing);
+  background-color: #f9f9f9;
+  overflow: hidden;  /* no scroll in sidebar */
+  z-index: 10;
+}
+
+.sidebar section {
+  background-color: #fff;
+  border-radius: var(--radius);
+  padding: var(--spacing);
+  font-family: var(--font-base);
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* 7. Bible panel (scrollable) */
+.content {
+  position: fixed;
+  top: calc(var(--header-height) + var(--controls-height));
+  left: var(--sidebar-width);
+  right: 0;
+  bottom: 0;
+
+  overflow-y: auto;
+  padding: calc(var(--spacing) * 1.5);
+  background-color: var(--color-bg);
+}
+
+#scripture-container {
+  background-color: var(--color-bg);
+  padding: calc(var(--spacing) * 1.5);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  font-family: var(--font-logo);
+}
+
+/* 8. Scripture formatting */
+.scripture h2 {
+  font-size: 1.5rem;
+  margin-bottom: var(--spacing);
+  border-bottom: 1px solid #ddd;
+  padding-bottom: calc(var(--spacing) / 2);
+}
+
+.scripture p {
+  margin: calc(var(--spacing) / 2) 0;
+}
+
+.scripture sup {
+  font-size: 0.75em;
+  vertical-align: super;
+  margin-right: 0.25em;
+  color: #555;
+}
+
+/* 9. Highlight & selection */
+::selection {
+  background-color: var(--color-highlight-bg);
+  color: var(--color-bg);
+}
+.highlight {
+  background-color: var(--color-highlight-bg);
+  color: var(--color-bg);
+  padding: 0.2em 0.4em;
+  border-radius: var(--radius);
+}
+
+/* — Default: show controls inline as before — */
+.controls {
+  position: fixed;
+  top: var(--header-height);
+  left: var(--sidebar-width);
+  right: 0;
+  height: var(--controls-height);
+  display: flex;
+  align-items: center;
+  gap: calc(var(--spacing)/2);
+  padding: 0 var(--spacing);
+  background: var(--color-bg);
+  border-bottom: 1px solid #eee;
+  z-index: 15;
+  transition: transform .3s ease;
+}
+
+
+.lex-def {
+  margin-top: 0.5rem;
+  line-height: 1.4;
+  color: #444;
+  white-space: pre-wrap;    /* preserve line breaks */
+}
+.error {
+  color: #c00;
+  font-style: italic;
+}
+
+/* — Collapsed state (hidden off‐screen to the right) — */
+.controls.collapsed {
+  transform: translateX(100%);
+}
+
+/* -------------------------------------------------- */
+/* 10. Full‐screen Bible on small screens              */
+/* -------------------------------------------------- */
+/* — Base drawer styling (mobile only) — */
+@media (max-width: 600px) {
+  /* show hamburger in header */
+  #ctrl-toggle {
+    display: block;
+  }
+
+  /* hide sidebar on mobile */
+  .sidebar {
+    display: none !important;
+  }
+
+  /* controls hidden by default, shown only when open */
+  .controls {
+    display: none !important;
+  }
+  .controls.open {
+    display: flex !important;
+    position: fixed;
+    top: var(--header-height);
+    left: 0; right: 0;
+    background: var(--color-bg);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing);
+    padding: var(--spacing);
+    z-index: 90;
+  }
+
+  /* full-width inputs */
+  .controls.open select,
+  .controls.open input,
+  .controls.open button {
+    width: 90%;
+    max-width: 320px;
+  }
+
+  /* bible content unchanged under header */
+  .content {
+    position: fixed;
+    top: var(--header-height);
+    left: 0; right: 0; bottom: 0;
+    padding: var(--spacing);
+    overflow-y: auto;
+  }
+}

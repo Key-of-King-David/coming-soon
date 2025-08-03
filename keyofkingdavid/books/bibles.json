@@ -1,0 +1,12 @@
+{
+  "bibles": [
+    { "bible_id": "KJV",  "name": "King James Version",                         "lang": "en", "year_published": 1769, "features": ["strongs_numbers","morphology","catchwords"],            "book_set_ids": ["protestant_66"] },
+    { "bible_id": "Aleppo","name": "Aleppo Codex",                             "lang": "he", "year_written": 930,           "book_set_ids": ["tanakh_24"],              "notes": "Roughly one-third is missing after 1947." },
+    { "bible_id": "ASV",  "name": "American Standard Version",                  "lang": "en", "year_published": 1901,           "book_set_ids": ["protestant_66"] },
+    { "bible_id": "YLT",  "name": "Young's Literal Translation",               "lang": "en", "year_published": 1898,           "book_set_ids": ["protestant_66"] },
+    { "bible_id": "WLC",  "name": "Westminster Leningrad Codex",              "lang": "he", "year_written": null,           "book_set_ids": ["tanakh_24"] },
+    { "bible_id": "OSHB", "name": "Open Scriptures Hebrew Bible",             "lang": "he", "year_written": null,           "book_set_ids": ["tanakh_24"] },
+    { "bible_id": "SpaRV","name": "La Santa Biblia Reina-Valera (1909)",      "lang": "es", "year_published": 1909,           "book_set_ids": ["protestant_66"] },
+    { "bible_id": "Vulgate","name": "Latin Vulgate",                          "lang": "la", "year_published": null,          "book_set_ids": ["protestant_66"] }
+  ]
+}

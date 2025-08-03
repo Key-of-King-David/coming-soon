@@ -1,0 +1,120 @@
+{
+  "layout": {
+    "old_testament": {
+      "description": "The first section is the Old Testament (consists of 39 books) and is a story of God’s creation of mankind, mankind’s fall away from God, and God’s ultimate desire and rescue plan for humanity.",
+      "categories": [
+        {
+          "name": "The Law (Pentateuch or Torah)",
+          "books": [
+            "Genesis",
+            "Exodus",
+            "Leviticus",
+            "Numbers",
+            "Deuteronomy"
+          ]
+        },
+        {
+          "name": "History",
+          "books": [
+            "Joshua",
+            "Judges",
+            "Ruth",
+            "1 Samuel",
+            "2 Samuel",
+            "1 Kings",
+            "2 Kings",
+            "1 Chronicles",
+            "2 Chronicles",
+            "Ezra",
+            "Nehemiah",
+            "Esther"
+          ]
+        },
+        {
+          "name": "Wisdom (Poetry and Praise)",
+          "books": [
+            "Job",
+            "Psalms",
+            "Proverbs",
+            "Ecclesiastes",
+            "Song of Songs"
+          ]
+        },
+        {
+          "name": "Major and Minor Prophets",
+          "books": [
+            "Isaiah",
+            "Jeremiah",
+            "Lamentations",
+            "Ezekiel",
+            "Daniel",
+            "Hosea",
+            "Joel",
+            "Amos",
+            "Obadiah",
+            "Jonah",
+            "Micah",
+            "Nahum",
+            "Habakkuk",
+            "Zephaniah",
+            "Haggai",
+            "Zechariah",
+            "Malachi"
+          ]
+        }
+      ]
+    },
+    "new_testament": {
+      "description": "The second section is the New Testament (consists of 27 books) and is the story of God’s redemption plan for humanity through Jesus.",
+      "categories": [
+        {
+          "name": "Gospels",
+          "books": [
+            "Matthew",
+            "Mark",
+            "Luke",
+            "John"
+          ]
+        },
+        {
+          "name": "Early Church History",
+          "books": [
+            "Acts"
+          ]
+        },
+        {
+          "name": "Letters to the Early Church",
+          "books": [
+            "Romans",
+            "1 Corinthians",
+            "2 Corinthians",
+            "Galatians",
+            "Ephesians",
+            "Philippians",
+            "Colossians",
+            "1 Thessalonians",
+            "2 Thessalonians",
+            "1 Timothy",
+            "2 Timothy",
+            "Titus",
+            "Philemon",
+            "Hebrews",
+            "James",
+            "1 Peter",
+            "2 Peter",
+            "1 John",
+            "2 John",
+            "3 John",
+            "Jude"
+          ]
+        },
+        {
+          "name": "Prophecy (Apocalyptic)",
+          "books": [
+            "Revelation"
+          ]
+        }
+      ]
+    }
+  }
+}

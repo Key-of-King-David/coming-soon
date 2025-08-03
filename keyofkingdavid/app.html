@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Key of King David - App</title>
+
+  <!-- KaTeX for math -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" crossorigin="anonymous" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js" crossorigin="anonymous"></script>
+
+  <!-- Main styles -->
+  <link rel="stylesheet" href="./css/styles.css" />
+  <link rel="stylesheet" href="./css/tools.css" />
+</head>
+<body>
+  <header>
+    <h1>Key of King David</h1>
+    <button id="ctrl-toggle" aria-label="Show chapter controls">☰</button>
+    <div class="controls">
+      <select id="bible-select"></select>
+      <select id="book-select"></select>
+      <input type="number" id="chapter-input" placeholder="Chapter" min="1" />
+      <button id="load-btn">Load Chapter</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Sidebar with enhanced UI/UX -->
+    <aside class="sidebar sidebar-enhanced">
+      <details class="panel" open>
+        <summary class="panel-summary">Cross References <span class="toggle-icon">▾</span> </summary>
+        <p>(Demo)</p>
+        <ul class="ref-list">
+          <li><a href="#" class="ref-link">John 1:1 – In the beginning</a></li>
+          <li><a href="#" class="ref-link">Psalm 23:1 – The Lord is my shepherd</a></li>
+          <li><a href="#" class="ref-link">Isaiah 9:6 – For unto us a child</a></li>
+        </ul>
+      </details>
+
+        <div class="panel">
+            <label for="lexicon-module" class="panel-title">Strong's Concordance</label>
+            <p><i>
+                Prefix zeros to lookup 5 digit numbers.
+            </i></p><br>
+                <div class="input-group">
+                    <!-- New select for module -->
+                    <select id="lexicon-module">
+                    <option value="StrongsHebrew">Hebrew</option>
+                    <option value="StrongsGreek">Greek</option>
+                    </select>
+                    <input type="text" id="lexicon-search" placeholder="(e.g. 00430)" />
+                    <button class="btn-search">Go</button>
+                </div>
+            <div class="lexicon-results"></div>
+        </div>
+
+      <div class="panel">
+        <label for="phrase-search" class="panel-title">Search Words & Phrases</label>
+        <p>(Demo)</p>
+        <div class="input-group">
+          <input type="text" id="phrase-search" placeholder="e.g. ‘love’ or ‘light’" />
+          <button class="btn-search">Search</button>
+        </div>
+        <div class="search-results">
+          <div class="phrase-entry">
+            <a href="#" class="phrase-link">Let there be light</a>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Scripture content panel -->
+    <section class="content">
+      <div id="scripture-container">
+        Select a book, version & chapter above.
+      </div>
+    </section>
+  </main>
+
+
+  <script src="./js/script.js"></script>
+</body>
+</html>
