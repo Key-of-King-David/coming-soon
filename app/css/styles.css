@@ -8,6 +8,7 @@
   --color-bg:            #fff;
   --color-text:          #333;
   --color-primary:       #435a72;
+  --color-hover:         #f83e3e;
   --color-highlight-bg:  rgba(0,0,0,0.9);
 
   /* fonts */
@@ -180,6 +181,7 @@ button:hover {
 
 .scripture p {
   margin: calc(var(--spacing) / 2) 0;
+  font-size: 1.3em;
 }
 
 .scripture sup {
@@ -188,6 +190,21 @@ button:hover {
   margin-right: 0.25em;
   color: #555;
 }
+
+/* 1) Tame Strong’s numbers in-text */
+.strong-number {
+  font-size: 0.75em;               /* smaller than body text */
+  color: #555;                     /* muted grey */
+  margin-left: 0.2em;              /* little breathing room */
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+/* 2) Hover highlight */
+.strong-number:hover {
+  color: var(--color-hover);     /* uses your accent variable */
+}
+
 
 /* 9. Highlight & selection */
 ::selection {
@@ -285,3 +302,4 @@ button:hover {
     overflow-y: auto;
   }
 }
+

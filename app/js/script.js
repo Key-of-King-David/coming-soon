@@ -1,4 +1,3 @@
-
 // 1) Your API proxy endpoint
 const API_BASE = 'https://api.keyofkingdavid.org/api';
 
@@ -12,7 +11,7 @@ function populateBibleDropdown() {
   select.innerHTML = '';
   bibles.forEach(b => {
     const opt = document.createElement('option');
-    opt.value       = b.bible_id;
+    opt.value = b.bible_id;
     opt.textContent = `${b.name} (${b.lang})`;
     opt.dataset.bookSets = JSON.stringify(b.book_set_ids);
     select.appendChild(opt);
@@ -75,8 +74,7 @@ function populateBookDropdown() {
 async function fetchChapterLaTeX(bookId, chapter) {
   const bibleId = document.getElementById('bible-select').value;
   const q       = encodeURIComponent(`${bookId} ${chapter}`);
-  const url = `${API_BASE}/search`
-            + `?module=${bibleId}`
+  const url = `${API_BASE}/search?module=${bibleId}`
             + `&query=${q}`
             + `&output_format=LaTeX`
             + `&output_encoding=UTF8`
@@ -90,7 +88,8 @@ async function fetchChapterLaTeX(bookId, chapter) {
   return latex;
 }
 
-// Parse the LaTeX into structured nodes
+// ————————————————————————————————————————————
+// Parse the LaTeX into structured nodes, preserving Strong's numbers
 function parseSwordLaTeX(latex) {
   const nodes = [];
   // chapter header
@@ -103,15 +102,24 @@ function parseSwordLaTeX(latex) {
   const verseRe = /\\swordverse\{[^}]+\}\{[^}]+\}\{(\d+)\}([\s\S]*?)(?=(?:\\swordverse|\\end\{document\}))/g;
   let m;
   while ((m = verseRe.exec(latex)) !== null) {
+    // preserve and wrap Strong's references
     let text = m[2]
-      .replace(/\\[a-zA-Z]+(?:\{[^}]*\})*/g, '')  // strip commands
-      .replace(/[{}]/g, '')                      // strip braces
+      // wrap Strong's number commands in clickable spans
+      .replace(/\\swordstrong\{([^}]+)\}\{([^}]+)\}/g, (_, module, num) => {
+        const raw = num.replace(/^0+/, '');
+        return `<span class="strong-number" data-module="${module}" data-strong="${raw}">${raw}</span>`;
+      })
+      // strip other LaTeX commands
+      .replace(/\\[a-zA-Z]+(?:\{[^}]*\})*/g, '')
+      .replace(/[{}]/g, '')
       .trim();
+
     nodes.push({ type: 'verse', number: m[1], text });
   }
   return nodes;
 }
 
+// ————————————————————————————————————————————
 // Render nodes into HTML
 function renderSwordHTML(nodes) {
   const container = document.createElement('div');
@@ -128,7 +136,10 @@ function renderSwordHTML(nodes) {
       const sup = document.createElement('sup');
       sup.textContent = node.number;
       p.appendChild(sup);
-      p.appendChild(document.createTextNode(' ' + node.text));
+      // allow HTML for clickable Strong's numbers
+      const textNode = document.createElement('span');
+      textNode.innerHTML = ' ' + node.text;
+      p.appendChild(textNode);
       container.appendChild(p);
     }
   });
@@ -136,6 +147,36 @@ function renderSwordHTML(nodes) {
   return container;
 }
 
+// ————————————————————————————————————————————
+// Attach click handlers to Strong's number spans
+function initializeStrongClicks() {
+  const elems = document.querySelectorAll('.strong-number');
+  elems.forEach(elem => {
+    elem.style.cursor = 'pointer';
+    elem.addEventListener('click', async () => {
+      const module = elem.dataset.module;
+      const num = elem.dataset.strong;
+      const code = num.padStart(5, '0');
+      const defPanel = document.querySelector('.lexicon-results');
+      defPanel.innerHTML = '<p>Loading…</p>';
+      try {
+        const data = await lookupStrongs(code, module);
+        const parsed = data.parsed;
+        defPanel.innerHTML = `
+          <div class="lex-entry">
+            <span class="strongs-number">${parsed.entry}</span>
+            <span class="lex-word">${parsed.word.replace(/<[^>]+>/g, '')} <em>(${parsed.transliteration.replace(/<[^>]+>/g, '')})</em></span>
+            <p class="lex-def">${parsed.definition}</p>
+          </div>
+        `;
+      } catch(err) {
+        defPanel.innerHTML = `<p class="error">${err.message}</p>`;
+      }
+    });
+  });
+}
+
+// ————————————————————————————————————————————
 // Main: load & render the selected chapter
 async function displayChapter() {
   const bookId = document.getElementById('book-select').value;
@@ -149,6 +190,8 @@ async function displayChapter() {
     const html = renderSwordHTML(parsed);
     out.innerHTML = '';
     out.appendChild(html);
+    // now enable Strong's lookup clicks
+    initializeStrongClicks();
   } catch (err) {
     out.textContent = 'Error: ' + err.message;
   }
@@ -157,16 +200,11 @@ async function displayChapter() {
 // ————————————————————————————————————————————
 // Lexicon lookup (Strongs)
 async function lookupStrongs(strongsNumber, moduleName) {
-  const raw = strongsNumber.toString().replace(/^0+/, '');
-  const code = raw.padStart(5, '0');
-  const url = `${API_BASE}/commentaries`
-            + `?module=${moduleName}`
-            + `&strongs=${code}`;
-
+  const url = `${API_BASE}/commentaries?module=Strongs${moduleName}&strongs=${strongsNumber}`;
   const res = await fetch(url);
   if (!res.ok) {
     if (res.status === 404) {
-      throw new Error(`No entry for ${raw} (${moduleName})`);
+      throw new Error(`No entry for ${strongsNumber} (${moduleName})`);
     }
     throw new Error(`API error: ${res.status}`);
   }
@@ -193,58 +231,10 @@ async function loadData() {
 // ————————————————————————————————————————————
 // Wire everything up on DOM ready
 window.addEventListener('DOMContentLoaded', async () => {
-  // 1) load dropdown data & build UI
   await loadData();
   populateBibleDropdown();
   populateBookDropdown();
 
-  // bible/book selection listeners
-  document
-    .getElementById('bible-select')
-    .addEventListener('change', populateBookDropdown);
-
-  // “Load Chapter” button
-  document
-    .getElementById('load-btn')
-    .addEventListener('click', displayChapter);
-
-  // Lexicon controls
-  const lexButton  = document.querySelector('.panel .btn-search');
-  const lexInput   = document.getElementById('lexicon-search');
-  const lexModule  = document.getElementById('lexicon-module');
-  const lexResults = document.querySelector('.lexicon-results');
-
-  lexButton.addEventListener('click', async () => {
-    const num    = lexInput.value.trim();
-    const module = lexModule.value;
-    if (!num) return;
-
-    lexResults.innerHTML = '<p>Loading…</p>';
-    try {
-      const { parsed } = await lookupStrongs(num, module);
-      lexResults.innerHTML = `
-        <div class="lex-entry">
-          <span class="strongs-number">${parsed.entry}</span>
-          <span class="lex-word">
-            ${parsed.word} <em>(${parsed.transliteration})</em>
-          </span>
-          <p class="lex-def">${parsed.definition}</p>
-        </div>`;
-    } catch (err) {
-      lexResults.innerHTML = `<p class="error">${err.message}</p>`;
-    }
-  });
-
-  lexInput.addEventListener('keypress', e => {
-    if (e.key === 'Enter') lexButton.click();
-  });
-
-  // Drawer toggle (mobile controls)
-  const toggleBtn = document.getElementById('ctrl-toggle');
-  const ctrls     = document.querySelector('.controls');
-
-  toggleBtn.addEventListener('click', () => {
-    ctrls.classList.toggle('open');
-    toggleBtn.textContent = ctrls.classList.contains('open') ? '×' : '☰';
-  });
+  document.getElementById('bible-select').addEventListener('change', populateBookDropdown);
+  document.getElementById('load-btn').addEventListener('click', displayChapter);
 });
