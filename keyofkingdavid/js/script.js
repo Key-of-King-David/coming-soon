@@ -1,7 +1,7 @@
 // script.js
 // ==========
 
-const API_BASE = 'http://3.99.223.11:8000/api';
+const API_BASE = 'https://api.keyofkingdavid.org/api';
 
 let bibles, bookSets = {}, layout;
 
