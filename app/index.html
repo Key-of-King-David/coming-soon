@@ -32,24 +32,17 @@
     <aside class="sidebar sidebar-enhanced">
       <details class="panel" open>
         <summary class="panel-summary">Cross References <span class="toggle-icon">▾</span> </summary>
+            <p><i>
+               Select a verse number to see cross-references.
+            </i></p>
         <div id="sidebar-crossref" class="ref-list-area"><em>No verse selected.</em></div>
       </details>
 
         <div class="panel">
             <label for="lexicon-module" class="panel-title">Strong's Concordance</label>
             <p><i>
-                Prefix zeros to lookup 5 digit numbers.
-            </i></p><br>
-                <div class="input-group">
-                    <!-- New select for module -->
-                    <select id="lexicon-module">
-                    <option value="StrongsHebrew">Hebrew</option>
-                    <option value="StrongsGreek">Greek</option>
-                    </select>
-                    <input type="text" id="lexicon-search" placeholder="(e.g. 00430)" />
-                    <script src="./js/script.js"></script>
-                    <button class="btn-search">Go</button>
-                </div>
+                See lexicon for words selected from the main content area.
+            </i></p>
             <div class="lexicon-results"></div>
         </div>
 
