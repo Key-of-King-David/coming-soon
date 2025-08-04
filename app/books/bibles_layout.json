@@ -1,7 +1,7 @@
 {
   "layout": {
     "old_testament": {
-      "description": "The first section is the Old Testament (consists of 39 books) and is a story of God’s creation of mankind, mankind’s fall away from God, and God’s ultimate desire and rescue plan for humanity.",
+      "description": "The Old Testament (39 books) tells the story of creation, the fall of mankind, and God's covenant and rescue plan through the history of Israel.",
       "categories": [
         {
           "name": "The Law (Pentateuch or Torah)",
@@ -41,7 +41,7 @@
           ]
         },
         {
-          "name": "Major and Minor Prophets",
+          "name": "Prophets",
           "books": [
             "Isaiah",
             "Jeremiah",
@@ -65,7 +65,7 @@
       ]
     },
     "new_testament": {
-      "description": "The second section is the New Testament (consists of 27 books) and is the story of God’s redemption plan for humanity through Jesus.",
+      "description": "The New Testament (27 books) describes God’s plan of redemption through Jesus Christ, the growth of the early church, and the hope of future restoration.",
       "categories": [
         {
           "name": "Gospels",

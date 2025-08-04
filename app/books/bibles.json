@@ -1,12 +1,226 @@
 {
   "bibles": [
-    { "bible_id": "KJV",  "name": "King James Version",                         "lang": "en", "year_published": 1769, "features": ["strongs_numbers","morphology","catchwords"],            "book_set_ids": ["protestant_66"] },
-    { "bible_id": "Aleppo","name": "Aleppo Codex",                             "lang": "he", "year_written": 930,           "book_set_ids": ["tanakh_24"],              "notes": "Roughly one-third is missing after 1947." },
-    { "bible_id": "ASV",  "name": "American Standard Version",                  "lang": "en", "year_published": 1901,           "book_set_ids": ["protestant_66"] },
-    { "bible_id": "YLT",  "name": "Young's Literal Translation",               "lang": "en", "year_published": 1898,           "book_set_ids": ["protestant_66"] },
-    { "bible_id": "WLC",  "name": "Westminster Leningrad Codex",              "lang": "he", "year_written": null,           "book_set_ids": ["tanakh_24"] },
-    { "bible_id": "OSHB", "name": "Open Scriptures Hebrew Bible",             "lang": "he", "year_written": null,           "book_set_ids": ["tanakh_24"] },
-    { "bible_id": "SpaRV","name": "La Santa Biblia Reina-Valera (1909)",      "lang": "es", "year_published": 1909,           "book_set_ids": ["protestant_66"] },
-    { "bible_id": "Vulgate","name": "Latin Vulgate",                          "lang": "la", "year_published": null,          "book_set_ids": ["protestant_66"] }
+    {
+      "bible_id": "KJV",
+      "name": "King James Version",
+      "lang": "en",
+      "year_published": 1769,
+      "features": ["strongs_numbers", "morphology", "catchwords"],
+      "book_set_ids": ["protestant_66"]
+    },
+    {
+      "bible_id": "Aleppo",
+      "name": "Aleppo Codex",
+      "lang": "he",
+      "year_written": 930,
+      "book_set_ids": ["tanakh_24"],
+      "notes": "Roughly one-third is missing after 1947."
+    },
+    {
+      "bible_id": "ASV",
+      "name": "American Standard Version",
+      "lang": "en",
+      "year_published": 1901,
+      "book_set_ids": ["protestant_66"]
+    },
+    {
+      "bible_id": "YLT",
+      "name": "Young's Literal Translation",
+      "lang": "en",
+      "year_published": 1898,
+      "book_set_ids": ["protestant_66"]
+    },
+    {
+      "bible_id": "WLC",
+      "name": "Westminster Leningrad Codex",
+      "lang": "he",
+      "year_written": null,
+      "book_set_ids": ["tanakh_24"]
+    },
+    {
+      "bible_id": "OSHB",
+      "name": "Open Scriptures Hebrew Bible",
+      "lang": "he",
+      "year_written": null,
+      "book_set_ids": ["tanakh_24"]
+    },
+    {
+      "bible_id": "SpaRV",
+      "name": "La Santa Biblia Reina-Valera (1909)",
+      "lang": "es",
+      "year_published": 1909,
+      "book_set_ids": ["protestant_66"]
+    },
+    {
+      "bible_id": "Vulgate",
+      "name": "Latin Vulgate",
+      "lang": "la",
+      "year_published": null,
+      "book_set_ids": ["protestant_66"]
+    },
+    {
+      "bible_id": "NETtext",
+      "name": "New English Translation",
+      "lang": "en",
+      "year_published": 2005,
+      "book_set_ids": ["protestant_66"]
+    },
+    {
+      "bible_id": "CPDV",
+      "name": "Catholic Public Domain Version",
+      "lang": "en",
+      "year_published": null,
+      "book_set_ids": ["catholic_73"]
+    },
+    {
+      "bible_id": "KJVA",
+      "name": "King James Version (1769) with Apocrypha",
+      "lang": "en",
+      "year_published": null,
+      "book_set_ids": ["catholic_73"]
+    },
+    {
+      "bible_id": "SBLGNT",
+      "name": "SBL Greek New Testament",
+      "lang": "grc",
+      "year_published": 2010,
+      "book_set_ids": ["new_testament_27"]
+    },
+    {
+      "bible_id": "StatResGNT",
+      "name": "Statistical Restoration Greek New Testament",
+      "lang": "grc",
+      "year_published": 2023,
+      "book_set_ids": ["new_testament_27"]
+    },
+    {
+      "bible_id": "Elzevir",
+      "name": "Elzevir Textus Receptus",
+      "lang": "grc",
+      "year_published": 1624,
+      "book_set_ids": ["new_testament_27"]
+    },
+    {
+      "bible_id": "FreJND",
+      "name": "Bible J.N. Darby (French)",
+      "lang": "fr",
+      "year_published": 1889,
+      "features": ["strongs_numbers"],
+      "book_set_ids": ["protestant_66"]
+    },
+    {
+      "bible_id": "OEB",
+      "name": "Open English Bible (US Spelling)",
+      "lang": "en",
+      "year_published": 2015,
+      "book_set_ids": ["new_testament_27"]
+    },
+    {
+      "bible_id": "OEBcth",
+      "name": "Open English Bible (Commonwealth Spelling)",
+      "lang": "en",
+      "year_published": 2015,
+      "book_set_ids": ["new_testament_27"]
+    },
+    {
+      "bible_id": "RKJNT",
+      "name": "Revised King James New Testament",
+      "lang": "en",
+      "year_published": 2018,
+      "book_set_ids": ["new_testament_27"]
+    },
+    {
+      "bible_id": "RLT",
+      "name": "Revised Literal Translation",
+      "lang": "en",
+      "year_published": 2018,
+      "features": ["strongs_numbers", "morphology"],
+      "book_set_ids": ["protestant_66"]
+    },
+    {
+      "bible_id": "RNKJV",
+      "name": "Restored Name King James Version",
+      "lang": "en",
+      "year_published": 2019,
+      "book_set_ids": ["protestant_66"]
+    },
+    {
+      "bible_id": "RWebster",
+      "name": "Revised Webster Version (1833)",
+      "lang": "en",
+      "year_published": 1833,
+      "book_set_ids": ["protestant_66"]
+    },
+    {
+      "bible_id": "SPVar",
+      "name": "Samaritan Pentateuch (Variant Readings)",
+      "lang": "he",
+      "year_written": null,
+      "book_set_ids": ["pentateuch_5"]
+    },
+    {
+      "bible_id": "VulgSistine",
+      "name": "Vulgata Sistina",
+      "lang": "la",
+      "year_published": null,
+      "book_set_ids": ["protestant_66"]
+    },
+    {
+      "bible_id": "JPS",
+      "name": "Jewish Publication Society Old Testament",
+      "lang": "en",
+      "year_published": 1917,
+      "book_set_ids": ["tanakh_24"]
+    },
+    {
+      "bible_id": "SBLGNT",
+      "name": "The Greek New Testament: SBL Edition",
+      "lang": "grc",
+      "year_published": 2010,
+      "book_set_ids": ["new_testament_27"]
+    },
+    {
+      "bible_id": "SPE",
+      "name": "Samaritan Pentateuch in English",
+      "lang": "en",
+      "year_written": null,
+      "book_set_ids": ["pentateuch_5"]
+    },
+    {
+      "bible_id": "SpaRVG",
+      "name": "Reina Valera Gómez",
+      "lang": "es",
+      "year_published": 2010,
+      "book_set_ids": ["protestant_66"]
+    },
+    {
+      "bible_id": "SpaRV1909",
+      "name": "Reina-Valera 1909 with Strong's Numbers",
+      "lang": "es",
+      "year_published": 1909,
+      "features": ["strongs_numbers"],
+      "book_set_ids": ["protestant_66"]
+    } ,
+    {
+      "bible_id": "FreGeneve1669",
+      "name": "Le Nouveau Testament de la Bible de Genève de 1669",
+      "lang": "fr",
+      "year_published": 1669,
+      "book_set_ids": ["new_testament_27"]
+    },
+    {
+      "bible_id": "FreBA",
+      "name": "La Bible Annotée de Bonnet et Bovet (1900)",
+      "lang": "fr",
+      "year_published": 1900,
+      "book_set_ids": ["protestant_66"]
+    },
+    {
+      "bible_id": "FreBDM1744",
+      "name": "Bible David Martin (1744)",
+      "lang": "fr",
+      "year_published": 1744,
+      "book_set_ids": ["protestant_66"]
+    }
   ]
 }

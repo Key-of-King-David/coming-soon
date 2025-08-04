@@ -4,17 +4,50 @@ const API_BASE = 'https://api.keyofkingdavid.org/api';
 // State holders
 let bibles, bookSets = {}, layout;
 
-// ————————————————————————————————————————————
-// Populate the “Bible” dropdown
+/**
+ * Populate the “Bible” dropdown, grouped by language and sorted alphabetically
+ */
 function populateBibleDropdown() {
   const select = document.getElementById('bible-select');
   select.innerHTML = '';
+
+  // Step 1: Group Bibles by language
+  const byLang = {};
   bibles.forEach(b => {
-    const opt = document.createElement('option');
-    opt.value = b.bible_id;
-    opt.textContent = `${b.name} (${b.lang})`;
-    opt.dataset.bookSets = JSON.stringify(b.book_set_ids);
-    select.appendChild(opt);
+    const lang = b.lang || '';
+    if (!byLang[lang]) byLang[lang] = [];
+    byLang[lang].push(b);
+  });
+
+  // Step 2: Sort languages (keys) alphabetically
+  const languages = Object.keys(byLang).sort((a, b) => a.localeCompare(b));
+
+  languages.forEach(lang => {
+    const group = byLang[lang];
+
+    // Sort Bible entries by name (case-insensitive)
+    group.sort((x, y) => 
+      x.name.toLowerCase().localeCompare(y.name.toLowerCase())
+    );
+
+    const optgroup = document.createElement('optgroup');
+    optgroup.label = lang || 'Unknown';
+
+    group.forEach(bible => {
+      const opt = document.createElement('option');
+      opt.value = bible.bible_id;
+      opt.textContent = bible.name;
+      if (bible.lang) {
+        opt.dataset.lang = bible.lang;
+      }
+      if (bible.book_set_ids) {
+        opt.dataset.bookSets = JSON.stringify(bible.book_set_ids);
+      }
+      select.appendChild(opt);
+      optgroup.appendChild(opt);
+    });
+
+    select.appendChild(optgroup);
   });
 }
 
@@ -109,6 +142,10 @@ function parseSwordLaTeX(latex) {
         const raw = num.replace(/^0+/, '');
         return `<span class="strong-number" data-module="${module}" data-strong="${raw}">${raw}</span>`;
       })
+      // render sworddivinename with special styling
+      .replace(/\\sworddivinename\{([^}]+)\}/g, (_, name) => {
+        return `<span class="divine-name">${name}</span>`;
+      })
       // strip other LaTeX commands
       .replace(/\\[a-zA-Z]+(?:\{[^}]*\})*/g, '')
       .replace(/[{}]/g, '')
@@ -125,6 +162,26 @@ function renderSwordHTML(nodes) {
   const container = document.createElement('div');
   container.className = 'scripture';
 
+  // Add language-specific class
+  const bibleId = document.getElementById('bible-select').value;
+  const bible = bibles.find(b => b.bible_id === bibleId);
+  if (bible) {
+    switch (bible.lang) {
+      case 'he':
+        container.classList.add('hebrew');
+        break;
+      case 'gr':
+      case 'el':
+        container.classList.add('greek');
+        break;
+      case 'la':
+        container.classList.add('latin');
+        break;
+      default:
+        container.classList.add('english');
+    }
+  }
+
   nodes.forEach(node => {
     if (node.type === 'chapter') {
       const cleanTitle = node.title.replace(/:\d+$/, '');
@@ -132,15 +189,15 @@ function renderSwordHTML(nodes) {
       h2.textContent = cleanTitle;
       container.appendChild(h2);
     } else {
-      const p   = document.createElement('p');
+      const p = document.createElement('p');
       const sup = document.createElement('sup');
       const chapterTitle = nodes.find(n => n.type === 'chapter')?.title || '';
-      const book = chapterTitle.replace(/\s*\d+$/, ''); // Remove trailing chapter number
+      const book = chapterTitle.replace(/\s*\d+$/, '');
       const chapterNum = chapterTitle.match(/\d+$/)?.[0] || '';
       const ref = `${book.trim()} ${chapterNum}:${node.number}`;
       sup.innerHTML = `<a href="#" class="bible-verse-link" data-ref="${ref}">${node.number}</a>`;
       p.appendChild(sup);
-      // allow HTML for clickable Strong's numbers
+
       const textNode = document.createElement('span');
       textNode.innerHTML = ' ' + node.text;
       p.appendChild(textNode);
@@ -150,6 +207,7 @@ function renderSwordHTML(nodes) {
 
   return container;
 }
+
 
 // ————————————————————————————————————————————
 // Attach click handlers to Strong's number spans
@@ -326,9 +384,10 @@ window.addEventListener('DOMContentLoaded', async () => {
             ev.preventDefault();
             const ref = this.dataset.ref;
             const verseArea = refArea.querySelector('.xref-verse-area');
+            const bibleId = document.getElementById('bible-select').value;
             verseArea.textContent = 'Loading…';
             try {
-              const verseRes = await fetch(`${API_BASE}/search?module=KJV&query=${encodeURIComponent(ref)}&output_format=plain&output_encoding=UTF8&variant=0&locale=en`);
+              const verseRes = await fetch(`${API_BASE}/search?module=${bibleId}&query=${encodeURIComponent(ref)}&output_format=plain&output_encoding=UTF8&variant=0&locale=en`);
               const verseData = await verseRes.json();
               verseArea.textContent = verseData.result || 'Not found.';
             } catch (err) {

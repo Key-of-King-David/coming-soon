@@ -1,3 +1,17 @@
+@font-face {
+  font-family: 'SBL Hebrew';
+  src: url('fonts/SBL_Hbrw.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'SBL Greek';
+  src: url('fonts/SBL_grk.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'SBL Latin';
+  src: url('fonts/SBL_BLit.ttf') format('truetype');
+}
+
+
 /* 1. Variables */
 :root {
   /* header gradient colors */
@@ -191,6 +205,12 @@ button:hover {
   color: #555;
 }
 
+.divine-name {
+  font-variant: small-caps;
+  /* font-size: 1.1rem; */
+  font-weight: 550;
+}
+
 /* 1) Tame Strong’s numbers in-text */
 .strong-number {
   font-size: 0.75em;               /* smaller than body text */
@@ -334,3 +354,16 @@ button:hover {
   color: #333;
 }
 
+.scripture.hebrew {
+  font-family: 'SBL Hebrew', serif;
+  direction: rtl;
+}
+
+.scripture.greek {
+  font-family: 'SBL Greek', serif;
+}
+
+.scripture.latin,
+.scripture.english {
+  font-family: 'SBL Latin', serif;
+}
