@@ -29,6 +29,8 @@
   --font-base:   'Segoe UI', Tahoma, Geneva, sans-serif;
   --font-logo:   ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
 
+  /* lighten secondary text to meet 4.5:1 */
+  --color-secondary-text: #555;  /* check with Contrast Checker */
   /* sizing */
   --radius:           6px;
   --spacing:          1rem;
@@ -55,6 +57,14 @@ body {
 
   height: 100vh;
   overflow: hidden;   /* disable page-level scrolling */
+}
+
+
+/* placeholder text */
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-secondary-text);
+  opacity: 1; /* ensure full strength */
 }
 
 /* 4. Header (fixed at top) */
@@ -366,4 +376,23 @@ button:hover {
 .scripture.latin,
 .scripture.english {
   font-family: 'SBL Latin', serif;
+}
+
+/* globally restore good focus outlines */
+:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* if you’ve reset outlines elsewhere, ensure they’re restored */
+button, a, input, select, textarea {
+  outline: none;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
 }
