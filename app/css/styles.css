@@ -223,11 +223,18 @@ button:hover {
 
 /* 1) Tame Strong’s numbers in-text */
 .strong-number {
-  font-size: 0.75em;               /* smaller than body text */
-  color: #555;                     /* muted grey */
+  font-size: 0.60em;               /* smaller than body text */
+  color: #5555559a;                     /* muted grey */
   margin-left: 0.2em;              /* little breathing room */
   cursor: pointer;
   transition: color 0.2s ease;
+
+  /* OPTION A: browser-native superscript */
+  vertical-align: super;
+
+  /* OPTION B: manual lift (uncomment if you prefer) */
+  /* position: relative;
+     top: -0.4em; */
 }
 
 /* 2) Hover highlight */

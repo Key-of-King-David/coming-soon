@@ -135,12 +135,24 @@ function parseSwordLaTeX(latex) {
   const verseRe = /\\swordverse\{[^}]+\}\{[^}]+\}\{(\d+)\}([\s\S]*?)(?=(?:\\swordverse|\\end\{document\}))/g;
   let m;
   while ((m = verseRe.exec(latex)) !== null) {
-    // preserve and wrap Strong's references
     let text = m[2]
-      // wrap Strong's number commands in clickable spans
+      // wrap Strong's number commands in clickable spans, prefixing with module initial
       .replace(/\\swordstrong\{([^}]+)\}\{([^}]+)\}/g, (_, module, num) => {
+        // strip leading zeros
         const raw = num.replace(/^0+/, '');
-        return `<span class="strong-number" data-module="${module}" data-strong="${raw}">${raw}</span>`;
+        // determine prefix
+        const prefix = module === 'Hebrew'
+          ? 'H'
+          : module === 'Greek'
+            ? 'G'
+            : module.charAt(0).toUpperCase();
+        const display = `${prefix}${raw}`;
+        return `<span
+                  class="strong-number"
+                  data-module="${module}"
+                  data-strong="${raw}"
+                  style="cursor: pointer;"
+                >${display}</span>`;
       })
       // render sworddivinename with special styling
       .replace(/\\sworddivinename\{([^}]+)\}/g, (_, name) => {
