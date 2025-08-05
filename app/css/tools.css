@@ -3,6 +3,8 @@
     flex-direction: column;
     gap: var(--spacing);
     padding: var(--spacing);
+      /* ↓ add these two ↓ */
+    overflow-y: auto;
   }
   .panel {
     background: #fff;
@@ -46,7 +48,7 @@
     cursor: pointer;
   }
   .btn-search:hover { opacity: 0.9; }
-  .lexicon-results, .search-results { max-height: 10rem; overflow-y: auto; }
+  .lexicon-results, .search-results { max-height: 20rem; overflow-y: auto; }
   .lex-entry, .phrase-entry { padding: 0.5rem 0; border-bottom: 1px solid #eee; }
   .strongs-number { font-weight: bold; margin-right: 0.5rem; }
   .forecast:last-child, .phrase-entry:last-child { border-bottom: none; }

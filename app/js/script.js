@@ -341,6 +341,45 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+
+  // Phrase-search handler
+  document.querySelector('.btn-search').addEventListener('click', async () => {
+    const query = document.getElementById('phrase-search').value.trim();
+    const linksEl = document.querySelector('.phrase-links');
+    const verseEl = document.querySelector('.phrase-verse-area');
+
+    linksEl.innerHTML = 'Searching…';
+    verseEl.textContent = '';        // clear any old verse
+
+    try {
+      const bibleId = document.getElementById('bible-select').value;
+      const url = `${API_BASE}/search?module=${bibleId}`
+                + `&query=${encodeURIComponent(query)}`
+                + `&search_type=multiword`
+                + `&output_format=plain`
+                + `&output_encoding=UTF8`
+                + `&variant=0`
+                + `&locale=en`;
+
+      const res  = await fetch(url);
+      if (!res.ok) throw new Error(res.status);
+      const data = await res.json();
+      const refs = data.result.match(/([1-3]?\s?[A-Za-z]+\s+\d+:\d+)/g) || [];
+
+      if (refs.length === 0) {
+        linksEl.innerHTML = '<em>No matches found.</em>';
+      } else {
+        // build a single row of links, exactly like cross-refs
+        linksEl.innerHTML = refs
+          .map(r => `<a href="#" class="phrase-xref" data-ref="${r.trim()}">${r.trim()}</a>`)
+          .join(' | ');
+      }
+    } catch (err) {
+      linksEl.innerHTML = `<p class="error">Error: ${err.message}</p>`;
+    }
+  });
+
+
   // Cross reference click handler
   document.querySelectorAll('.ref-link').forEach(link => {
     link.addEventListener('click', async function(e) {
@@ -491,3 +530,32 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   });
 });
+
+// Delegate clicks on phrase-search links
+document.addEventListener('click', async e => {
+  if (!e.target.matches('.phrase-xref')) return;
+  e.preventDefault();
+
+  const ref    = e.target.dataset.ref;
+  const verseEl = document.querySelector('.phrase-verse-area');
+  verseEl.textContent = 'Loading…';
+
+  try {
+    const bibleId = document.getElementById('bible-select').value;
+    const verseUrl = `${API_BASE}/search?module=KJV`
+                   + `&query=${encodeURIComponent(ref)}`
+                   + `&output_format=plain`
+                   + `&output_encoding=UTF8`
+                   + `&variant=0`
+                   + `&locale=en`;
+
+    const verseRes  = await fetch(verseUrl);
+    if (!verseRes.ok) throw new Error(verseRes.status);
+    const verseData = await verseRes.json();
+
+    verseEl.textContent = verseData.result || 'Not found.';
+  } catch (err) {
+    verseEl.textContent = 'Error loading verse.';
+  }
+});
+
