@@ -1,49 +1,64 @@
-// 1) Your API proxy endpoint
+// scripture_app.js
+// Front-end logic for Key of King David Bible study application
+// Handles dropdown population, chapter fetching & rendering, Strong's lookups, phrase search, and cross-references
+
+// 1) Base URL for API proxy
 const API_BASE = 'https://api.keyofkingdavid.org/api';
 
-// State holders
-let bibles, bookSets = {}, layout;
+// ----- State Holders -----
+let bibles = [];        // Array of available Bible metadata
+let bookSets = {};      // Mapping from book_set_id to array of book objects
+let layout = {};        // Structure for organizing books by testament and category
+
+// ----- Utility Functions -----
 
 /**
- * Populate the “Bible” dropdown, grouped by language and sorted alphabetically
+ * Load JSON data from a local file path.
+ * @param {string} path - Relative path to JSON file.
+ * @returns {Promise<any>} Parsed JSON data.
+ */
+async function loadJSON(path) {
+  const response = await fetch(path);
+  if (!response.ok) {
+    throw new Error(`Failed to load ${path}: ${response.status}`);
+  }
+  return response.json();
+}
+
+// ----- Dropdown Population -----
+
+/**
+ * Populate the "Bible" dropdown (<select id="bible-select").
+ * Groups bibles by language and sorts languages & bible names alphabetically.
  */
 function populateBibleDropdown() {
   const select = document.getElementById('bible-select');
   select.innerHTML = '';
 
-  // Step 1: Group Bibles by language
-  const byLang = {};
-  bibles.forEach(b => {
-    const lang = b.lang || '';
-    if (!byLang[lang]) byLang[lang] = [];
-    byLang[lang].push(b);
-  });
+  // Group bibles by language code
+  const byLang = bibles.reduce((acc, bible) => {
+    const lang = bible.lang || 'Unknown';
+    if (!acc[lang]) acc[lang] = [];
+    acc[lang].push(bible);
+    return acc;
+  }, {});
 
-  // Step 2: Sort languages (keys) alphabetically
-  const languages = Object.keys(byLang).sort((a, b) => a.localeCompare(b));
-
-  languages.forEach(lang => {
+  // Sort languages, then create <optgroup> for each
+  Object.keys(byLang).sort().forEach(lang => {
     const group = byLang[lang];
-
-    // Sort Bible entries by name (case-insensitive)
-    group.sort((x, y) => 
-      x.name.toLowerCase().localeCompare(y.name.toLowerCase())
+    group.sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
     );
 
     const optgroup = document.createElement('optgroup');
-    optgroup.label = lang || 'Unknown';
+    optgroup.label = lang;
 
     group.forEach(bible => {
       const opt = document.createElement('option');
       opt.value = bible.bible_id;
       opt.textContent = bible.name;
-      if (bible.lang) {
-        opt.dataset.lang = bible.lang;
-      }
-      if (bible.book_set_ids) {
-        opt.dataset.bookSets = JSON.stringify(bible.book_set_ids);
-      }
-      select.appendChild(opt);
+      if (bible.lang) opt.dataset.lang = bible.lang;
+      if (bible.book_set_ids) opt.dataset.bookSets = JSON.stringify(bible.book_set_ids);
       optgroup.appendChild(opt);
     });
 
@@ -51,27 +66,24 @@ function populateBibleDropdown() {
   });
 }
 
-// Populate the “Book” dropdown
+/**
+ * Populate the "Book" dropdown (<select id="book-select").
+ * Filters and organizes books by Old/New Testament and categories.
+ */
 function populateBookDropdown() {
   const bibleId = document.getElementById('bible-select').value;
-  const bible   = bibles.find(b => b.bible_id === bibleId);
+  const bible = bibles.find(b => b.bible_id === bibleId);
   if (!bible) return;
 
-  // gather books from all sets this Bible uses
-  const available = [];
-  bible.book_set_ids.forEach(setId => {
-    (bookSets[setId]||[]).forEach(book => available.push(book));
-  });
+  // Collect all books available for this Bible
+  const available = bible.book_set_ids.flatMap(setId => bookSets[setId] || []);
 
-  // helper to match by name
-  const findBookByName = name =>
-    available.find(b => b.name.toLowerCase() === name.toLowerCase());
+  const bookSelect = document.getElementById('book-select');
+  bookSelect.innerHTML = '';
 
-  const bookSel = document.getElementById('book-select');
-  bookSel.innerHTML = '';
-
-  ['old_testament','new_testament'].forEach(testKey => {
-    const section = layout[testKey];
+  // Iterate through Old and New Testament layout
+  ['old_testament', 'new_testament'].forEach(sectionKey => {
+    const section = layout[sectionKey];
     if (!section) return;
 
     section.categories.forEach(category => {
@@ -79,140 +91,144 @@ function populateBookDropdown() {
       optgroup.label = category.name;
 
       category.books.forEach(bookName => {
-        const bObj = findBookByName(bookName);
-        if (bObj) {
+        const book = available.find(
+          b => b.name.toLowerCase() === bookName.toLowerCase()
+        );
+        if (book) {
           const opt = document.createElement('option');
-          opt.value       = bObj.id;
-          opt.textContent = bObj.name;
-          opt.dataset.chapters = bObj.chapter_count;
+          opt.value = book.id;
+          opt.textContent = book.name;
+          opt.dataset.chapters = book.chapter_count;
           optgroup.appendChild(opt);
         }
       });
 
       if (optgroup.children.length) {
-        bookSel.appendChild(optgroup);
+        bookSelect.appendChild(optgroup);
       }
     });
   });
 
-  // reset chapter input
-  const chapInput = document.getElementById('chapter-input');
-  const firstOpt  = bookSel.selectedOptions[0];
-  chapInput.max   = firstOpt ? Number(firstOpt.dataset.chapters) : 1;
-  chapInput.value = 1;
+  // Reset chapter input constraints
+  // const chapInput = document.getElementById('chapter-input');
+  // const firstOpt = bookSelect.selectedOptions[0];
+  // chapInput.max = firstOpt ? Number(firstOpt.dataset.chapters) : 1;
+  // chapInput.value = 1;
 }
 
-// ————————————————————————————————————————————
-// Fetch LaTeX for a chapter from your API
-async function fetchChapterLaTeX(bookId, chapter) {
+// ----- Chapter Fetch & Parsing -----
+
+/**
+ * Fetch LaTeX markup for a specific chapter from the API.
+ * @param {string} bookName - Name of the book (e.g., "Genesis").
+ * @param {number} chapter - Chapter number.
+ * @returns {Promise<string>} Raw LaTeX result.
+ */
+async function fetchChapterLaTeX(bookName, chapter) {
   const bibleId = document.getElementById('bible-select').value;
-  const q       = encodeURIComponent(`${bookId} ${chapter}`);
-  const url = `${API_BASE}/search?module=${bibleId}`
-            + `&query=${q}`
-            + `&output_format=LaTeX`
-            + `&output_encoding=UTF8`
-            + `&variant=0`
-            + `&locale=en`
-            + `&option_filters=nfmhcvaplsrbwgeixtM`;
+  const query = encodeURIComponent(`${bookName} ${chapter}`);
+  const url = `${API_BASE}/search?module=${bibleId}` +
+    `&query=${query}` +
+    `&output_format=LaTeX` +
+    `&output_encoding=UTF8` +
+    `&variant=0` +
+    `&locale=en` +
+    `&option_filters=nfmhcvaplsrbwgeixtM`;
 
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`API returned ${res.status}`);
-  const { result: latex } = await res.json();
-  return latex;
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`API returned status ${response.status}`);
+  }
+  const data = await response.json();
+  return data.result;
 }
 
-// ————————————————————————————————————————————
-// Parse the LaTeX into structured nodes, preserving Strong's numbers
+/**
+ * Parse LaTeX into structured nodes: chapter header and verses.
+ * Preserves Strong's numbers and divine names.
+ * @param {string} latex - Raw LaTeX string.
+ * @returns {Array<Object>} Array of nodes with type, number/text, etc.
+ */
 function parseSwordLaTeX(latex) {
   const nodes = [];
-  // chapter header
+
+  // Match chapter header
   const chapRe = /\\swordchapter\{([^}]+)\}\{([^}]+)\}\{\d+\}/;
   const cm = chapRe.exec(latex);
   if (cm) {
     nodes.push({ type: 'chapter', osis: cm[1], title: cm[2] });
   }
-  // verses
+
+  // Match verses
   const verseRe = /\\swordverse\{[^}]+\}\{[^}]+\}\{(\d+)\}([\s\S]*?)(?=(?:\\swordverse|\\end\{document\}))/g;
   let m;
   while ((m = verseRe.exec(latex)) !== null) {
     let text = m[2]
-      // wrap Strong's number commands in clickable spans, prefixing with module initial
+      // Convert Strong's commands into clickable spans
       .replace(/\\swordstrong\{([^}]+)\}\{([^}]+)\}/g, (_, module, num) => {
-        // strip leading zeros
         const raw = num.replace(/^0+/, '');
-        // determine prefix
-        const prefix = module === 'Hebrew'
-          ? 'H'
-          : module === 'Greek'
-            ? 'G'
-            : module.charAt(0).toUpperCase();
+        const prefix = module === 'Hebrew' ? 'H' : module === 'Greek' ? 'G' : module.charAt(0).toUpperCase();
         const display = `${prefix}${raw}`;
-        return `<span
-                  class="strong-number"
-                  data-module="${module}"
-                  data-strong="${raw}"
-                  style="cursor: pointer;"
-                >${display}</span>`;
+        return `<span class="strong-number" data-module="${module}" data-strong="${raw}">${display}</span>`;
       })
-      // render sworddivinename with special styling
-      .replace(/\\sworddivinename\{([^}]+)\}/g, (_, name) => {
-        return `<span class="divine-name">${name}</span>`;
-      })
-      // strip other LaTeX commands
+      // Convert divine name markup
+      .replace(/\\sworddivinename\{([^}]+)\}/g, (_, name) => `<span class="divine-name">${name}</span>`)
+      // Strip other LaTeX commands and braces
       .replace(/\\[a-zA-Z]+(?:\{[^}]*\})*/g, '')
       .replace(/[{}]/g, '')
       .trim();
 
     nodes.push({ type: 'verse', number: m[1], text });
   }
+
   return nodes;
 }
 
-// ————————————————————————————————————————————
-// Render nodes into HTML
+// ----- Rendering HTML -----
+
+/**
+ * Render parsed nodes into a HTML container.
+ * Adds language-specific CSS classes and verse links.
+ * @param {Array<Object>} nodes - Parsed LaTeX nodes.
+ * @returns {HTMLElement} Container with rendered content.
+ */
 function renderSwordHTML(nodes) {
   const container = document.createElement('div');
   container.className = 'scripture';
 
-  // Add language-specific class
+  // Determine language class from selected Bible
   const bibleId = document.getElementById('bible-select').value;
   const bible = bibles.find(b => b.bible_id === bibleId);
   if (bible) {
-    switch (bible.lang) {
-      case 'he':
-        container.classList.add('hebrew');
-        break;
-      case 'gr':
-      case 'el':
-        container.classList.add('greek');
-        break;
-      case 'la':
-        container.classList.add('latin');
-        break;
-      default:
-        container.classList.add('english');
-    }
+    const langClass = bible.lang === 'he' ? 'hebrew'
+      : ['gr', 'el'].includes(bible.lang) ? 'greek'
+      : bible.lang === 'la' ? 'latin'
+      : 'english';
+    container.classList.add(langClass);
   }
 
+  // Construct elements for chapter and verses
   nodes.forEach(node => {
     if (node.type === 'chapter') {
-      const cleanTitle = node.title.replace(/:\d+$/, '');
       const h2 = document.createElement('h2');
-      h2.textContent = cleanTitle;
+      h2.textContent = node.title.replace(/[:\s]+$/, ''); // Remove trailing colon/space
+      h2.className = 'chapter-title';
       container.appendChild(h2);
     } else {
       const p = document.createElement('p');
       const sup = document.createElement('sup');
-      const chapterTitle = nodes.find(n => n.type === 'chapter')?.title || '';
-      const book = chapterTitle.replace(/\s*\d+$/, '');
-      const chapterNum = chapterTitle.match(/\d+$/)?.[0] || '';
-      const ref = `${book.trim()} ${chapterNum}:${node.number}`;
-      sup.innerHTML = `<a href="#" class="bible-verse-link" data-ref="${ref}">${node.number}</a>`;
+      const link = document.createElement('a');
+      link.href = '#';
+      link.className = 'bible-verse-link';
+      link.dataset.ref = `${nodes.find(n => n.type==='chapter').title.split(':')[0]}:${node.number}`;
+      link.textContent = node.number;
+      sup.appendChild(link);
       p.appendChild(sup);
 
-      const textNode = document.createElement('span');
-      textNode.innerHTML = ' ' + node.text;
-      p.appendChild(textNode);
+      const span = document.createElement('span');
+      span.innerHTML = ' ' + node.text;
+      p.appendChild(span);
+
       container.appendChild(p);
     }
   });
@@ -220,253 +236,160 @@ function renderSwordHTML(nodes) {
   return container;
 }
 
+// ----- Strong's Lookup -----
 
-// ————————————————————————————————————————————
-// Attach click handlers to Strong's number spans
+/**
+ * Attach click handlers to Strong's number spans.
+ * Fetches definition entries and renders in lexicon panel.
+ */
 function initializeStrongClicks() {
-  const elems = document.querySelectorAll('.strong-number');
-  elems.forEach(elem => {
+  document.querySelectorAll('.strong-number').forEach(elem => {
     elem.style.cursor = 'pointer';
     elem.addEventListener('click', async () => {
       const module = elem.dataset.module;
       const num = elem.dataset.strong;
       const code = num.padStart(5, '0');
-      const defPanel = document.querySelector('.lexicon-results');
-      defPanel.innerHTML = '<p>Loading…</p>';
+      const panel = document.querySelector('.lexicon-results');
+      panel.innerHTML = '<p>Loading…</p>';
       try {
         const data = await lookupStrongs(code, module);
         const parsed = data.parsed;
-        defPanel.innerHTML = `
+        panel.innerHTML = `
           <div class="lex-entry">
             <span class="strongs-number">${parsed.entry}</span>
-            <span class="lex-word">${parsed.word.replace(/<[^>]+>/g, '')} <em>(${parsed.transliteration.replace(/<[^>]+>/g, '')})</em></span>
+            <span class="lex-word">${parsed.word} <em>(${parsed.transliteration})</em></span>
             <p class="lex-def">${parsed.definition}</p>
-          </div>
-        `;
-      } catch(err) {
-        defPanel.innerHTML = `<p class="error">${err.message}</p>`;
+          </div>`;
+      } catch (err) {
+        panel.innerHTML = `<p class="error">${err.message}</p>`;
       }
     });
   });
 }
 
-// ————————————————————————————————————————————
-// Main: load & render the selected chapter
+// ----- Display Chapter Workflow -----
+
+/**
+ * Main function to fetch, parse, render, and initialize interactions for a chapter.
+ */
 async function displayChapter() {
-  const bookSel = document.getElementById('book-select');
-  const chapter = document.getElementById('chapter-input').value;
+  const bookSelect = document.getElementById('book-select');
+  const chapterInput = document.getElementById('chapter-input');
   const out = document.getElementById('scripture-container');
   out.textContent = 'Loading…';
 
-  // Get the selected option's text (the book name)
-  const bookName = bookSel.selectedOptions[0].textContent;
-
+  const bookName = bookSelect.selectedOptions[0].textContent;
   try {
-    const latex = await fetchChapterLaTeX(bookName, chapter); // use bookName, not bookId
-    const parsed = parseSwordLaTeX(latex);
-    const html = renderSwordHTML(parsed);
+    const latex = await fetchChapterLaTeX(bookName, chapterInput.value);
+    const nodes = parseSwordLaTeX(latex);
+    const html = renderSwordHTML(nodes);
     out.innerHTML = '';
     out.appendChild(html);
-    // now enable Strong's lookup clicks
     initializeStrongClicks();
   } catch (err) {
-    out.textContent = 'Error: ' + err.message;
+    out.textContent = `Error: ${err.message}`;
   }
 }
 
-// ————————————————————————————————————————————
-// Lexicon lookup (Strongs)
+/**
+ * API call to fetch Strong's entry definitions.
+ * @param {string} strongsNumber - Zero-padded Strong's number.
+ * @param {string} moduleName - 'Hebrew' or 'Greek'.
+ */
 async function lookupStrongs(strongsNumber, moduleName) {
   const url = `${API_BASE}/commentaries?module=Strongs${moduleName}&strongs=${strongsNumber}`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    if (res.status === 404) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    if (response.status === 404) {
       throw new Error(`No entry for ${strongsNumber} (${moduleName})`);
     }
-    throw new Error(`API error: ${res.status}`);
+    throw new Error(`API error: ${response.status}`);
   }
-  return res.json();
+  return response.json();
 }
 
-// ————————————————————————————————————————————
-// Load dropdown data JSON
-async function loadData() {
-  const [biblesData, bookSetsData, layoutData] = await Promise.all([
-    fetch('books/bibles.json').then(r => r.json()),
-    fetch('books/book_sets.json').then(r => r.json()),
-    fetch('books/bibles_layout.json').then(r => r.json())
-  ]);
+// ----- Phrase Search Handler -----
 
-  bibles   = biblesData.bibles;
-  layout   = layoutData.layout;
-  bookSets = {};
-  bookSetsData.book_sets.forEach(set => {
-    bookSets[set.set_id] = set.books;
-  });
+/**
+ * Handles phrase search button click to find verses containing the query.
+ */
+async function handlePhraseSearch() {
+  const query = document.getElementById('phrase-search').value.trim();
+  const linksEl = document.querySelector('.phrase-links');
+  const verseEl = document.querySelector('.phrase-verse-area');
+
+  linksEl.innerHTML = 'Searching…';
+  verseEl.textContent = '';
+
+  try {
+    const bibleId = document.getElementById('bible-select').value;
+    const url = `${API_BASE}/search?module=${bibleId}` +
+      `&query=${encodeURIComponent(query)}` +
+      `&search_type=multiword` +
+      `&output_format=plain` +
+      `&output_encoding=UTF8` +
+      `&variant=0` +
+      `&locale=en`;
+
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    const refs = data.result.match(/([1-3]?\s?[A-Za-z]+\s+\d+:\d+)/g) || [];
+
+    if (refs.length === 0) {
+      linksEl.innerHTML = '<em>No matches found.</em>';
+    } else {
+      linksEl.innerHTML = refs.map(r =>
+        `<a href="#" class="phrase-xref" data-ref="${r.trim()}">${r.trim()}</a>`
+      ).join(' | ');
+    }
+  } catch (err) {
+    linksEl.innerHTML = `<p class="error">Error: ${err.message}</p>`;
+  }
 }
 
-// ————————————————————————————————————————————
-// Wire everything up on DOM ready
-window.addEventListener('DOMContentLoaded', async () => {
-  await loadData();
-  populateBibleDropdown();
-  populateBookDropdown();
+// ----- Cross-Reference Handlers & Delegation -----
 
-  document.getElementById('bible-select').addEventListener('change', populateBookDropdown);
-  document.getElementById('load-btn').addEventListener('click', () => {
-    const menuPanel = document.getElementById('menu-panel');
-    const controls = document.querySelector('.controls');
+/**
+ * Normalize a raw reference into TSK key format (e.g., "John 3:16:").
+ * @param {string} rawRef
+ * @returns {string} Normalized ref with trailing colon
+ */
+function makeTSKKey(rawRef) {
+  let ref = rawRef.trim();
+  ref = ref.replace(/\s*:\s*/g, ':');
+  if (!ref.endsWith(':')) ref += ':';
+  return ref;
+}
 
-    // Collapse both menus if open
-    if (menuPanel && menuPanel.classList.contains('open')) {
-      menuPanel.classList.remove('open');
-    }
-    if (window.innerWidth <= 600 && controls) {
-      controls.classList.remove('open');
-    }
-    displayChapter();
-  });
-
-  // Hamburger menu toggle
-  const menuToggle = document.getElementById('menu-toggle');
-  const menuPanel  = document.getElementById('menu-panel');
-
-  if (menuToggle && menuPanel) {
-    menuToggle.addEventListener('click', () => {
-      menuPanel.classList.toggle('open');
-    });
-  }
-
-  const ctrlToggle = document.getElementById('ctrl-toggle');
-  const controls   = document.querySelector('.controls');
-  const loadBtn    = document.getElementById('load-btn');
-
-  // Hamburger toggles controls panel
-  ctrlToggle.addEventListener('click', function() {
-    controls.classList.toggle('open');
-  });
-
-  // When "Load Chapter" is clicked, collapse controls on mobile
-  loadBtn.addEventListener('click', function() {
-    if (window.innerWidth <= 600) {
-      controls.classList.remove('open');
-    }
-  });
-
-
-  // Phrase-search handler
-  document.querySelector('.btn-search').addEventListener('click', async () => {
-    const query = document.getElementById('phrase-search').value.trim();
-    const linksEl = document.querySelector('.phrase-links');
-    const verseEl = document.querySelector('.phrase-verse-area');
-
-    linksEl.innerHTML = 'Searching…';
-    verseEl.textContent = '';        // clear any old verse
-
-    try {
-      const bibleId = document.getElementById('bible-select').value;
-      const url = `${API_BASE}/search?module=${bibleId}`
-                + `&query=${encodeURIComponent(query)}`
-                + `&search_type=multiword`
-                + `&output_format=plain`
-                + `&output_encoding=UTF8`
-                + `&variant=0`
-                + `&locale=en`;
-
-      const res  = await fetch(url);
-      if (!res.ok) throw new Error(res.status);
-      const data = await res.json();
-      const refs = data.result.match(/([1-3]?\s?[A-Za-z]+\s+\d+:\d+)/g) || [];
-
-      if (refs.length === 0) {
-        linksEl.innerHTML = '<em>No matches found.</em>';
-      } else {
-        // build a single row of links, exactly like cross-refs
-        linksEl.innerHTML = refs
-          .map(r => `<a href="#" class="phrase-xref" data-ref="${r.trim()}">${r.trim()}</a>`)
-          .join(' | ');
-      }
-    } catch (err) {
-      linksEl.innerHTML = `<p class="error">Error: ${err.message}</p>`;
-    }
-  });
-
-
-  // Cross reference click handler
-  document.querySelectorAll('.ref-link').forEach(link => {
-    link.addEventListener('click', async function(e) {
+// Event delegation for all cross-reference clicks
+function initializeCrossReferenceDelegation() {
+  document.addEventListener('click', async (e) => {
+    // Phrase Xref click
+    if (e.target.matches('.phrase-xref')) {
       e.preventDefault();
-      const verse = this.textContent.split('–')[0].trim(); // e.g. "John 1:1"
-      const panel = this.closest('.panel');
-      const refArea = panel.querySelector('.ref-list-area') || (() => {
-        const d = document.createElement('div');
-        d.className = 'ref-list-area';
-        panel.appendChild(d);
-        return d;
-      })();
-      refArea.innerHTML = 'Loading cross-references…';
-
-      // Fetch cross-references
+      const ref = e.target.dataset.ref;
+      const verseEl = document.querySelector('.phrase-verse-area');
+      verseEl.textContent = 'Loading…';
       try {
-        const res = await fetch(`${API_BASE}/commentaries?module=TSK&strongs=${encodeURIComponent(verse)}`);
+        const bibleId = document.getElementById('bible-select').value;
+        const url = `${API_BASE}/search?module=${bibleId}` +
+          `&query=${encodeURIComponent(ref)}` +
+          `&output_format=plain` +
+          `&output_encoding=UTF8` +
+          `&variant=0` +
+          `&locale=en`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(res.status);
         const data = await res.json();
-        // Extract all <scripRef>...</scripRef> as references
-        const refs = [];
-        const re = /<scripRef>(.*?)<\/scripRef>/g;
-        let m;
-        while ((m = re.exec(data.raw_html)) !== null) {
-          m[1].split(';').forEach(ref => {
-            const trimmed = ref.trim();
-            if (trimmed) refs.push(trimmed);
-          });
-        }
-        if (refs.length === 0) {
-          refArea.innerHTML = '<em>No cross-references found.</em>';
-          return;
-        }
-        // Render as hyperlinks
-        refArea.innerHTML = refs.map(r =>
-          `<a href="#" class="xref-link" data-ref="${r}">${r}</a>`
-        ).join(' | ') + '<div class="xref-verse-area" style="margin-top:1em"></div>';
-
-        // Add click handlers for xref links
-        refArea.querySelectorAll('.xref-link').forEach(xref => {
-          xref.addEventListener('click', async function(ev) {
-            ev.preventDefault();
-            const ref = this.dataset.ref;
-            const verseArea = refArea.querySelector('.xref-verse-area');
-            const bibleId = document.getElementById('bible-select').value;
-            verseArea.textContent = 'Loading…';
-            try {
-              const verseRes = await fetch(`${API_BASE}/search?module=${bibleId}&query=${encodeURIComponent(ref)}&output_format=plain&output_encoding=UTF8&variant=0&locale=en`);
-              const verseData = await verseRes.json();
-              verseArea.textContent = verseData.result || 'Not found.';
-            } catch (err) {
-              verseArea.textContent = 'Error loading verse.';
-            }
-          });
-        });
+        verseEl.textContent = data.result || 'Not found.';
       } catch (err) {
-        refArea.innerHTML = '<em>Error loading cross-references.</em>';
+        verseEl.textContent = 'Error loading verse.';
       }
-    });
-  });
-  function makeTSKKey(rawRef) {
-    // 1) Trim whitespace
-    let ref = rawRef.trim();
-
-    // 2) Collapse any spaces around colons into a single colon
-    //    e.g. "John 3 : 16" → "John 3:16"
-    ref = ref.replace(/\s*:\s*/g, ':')
-
-    // 3) Ensure it ends with exactly one trailing colon:
-    if (!ref.endsWith(':')) {
-      ref = ref + ':';
+      return;
     }
-    return ref;
-  }
-  document.addEventListener('click', async function(e) {
-    // Handle verse number click in Bible content
+
+    // Bible verse number click -> load cross references in panels
     if (e.target.matches('.bible-verse-link, .bible-verse-link *')) {
       e.preventDefault();
       const link = e.target.closest('.bible-verse-link');
@@ -480,49 +403,32 @@ window.addEventListener('DOMContentLoaded', async () => {
         const key = makeTSKKey(ref);
         const res = await fetch(`${API_BASE}/commentaries?module=TSK&strongs=${encodeURIComponent(key)}`);
         const data = await res.json();
-
-        // Extract all <scripRef>...</scripRef> as references
         const refs = [];
         const re = /<scripRef>(.*?)<\/scripRef>/g;
         let m;
         while ((m = re.exec(data.raw_html)) !== null) {
           m[1].split(';').forEach(r => {
-            const trimmed = r.trim();
-            if (trimmed) refs.push(trimmed);
+            const t = r.trim(); if (t) refs.push(t);
           });
         }
 
-        // Render links in the crossref panel
-        const linksHtml = refs.map(r =>
-          `<a href="#" class="xref-link" data-ref="${r}">${r}</a>`
-        ).join(' | ');
+        // Render main panel links
+        const linksHtml = refs.map(r => `<a href="#" class="xref-link" data-ref="${r}">${r}</a>`).join(' | ');
+        crossrefPanel.innerHTML = `<div class="ref-list-area"><strong>Cross References for ${ref}:</strong><br>${linksHtml}<div class="xref-verse-area" style="margin-top:1em"></div></div>`;
 
-        crossrefPanel.innerHTML = `
-          <div class="ref-list-area">
-            <strong>Cross References for ${ref}:</strong><br>
-            ${linksHtml}
-            <div class="xref-verse-area" style="margin-top:1em"></div>
-          </div>
-        `;
-
-        // Render links in the sidebar as before
-        if (refs.length === 0) {
-          sidebarPanel.innerHTML = '<em>No cross-references found.</em>';
-        } else {
-          sidebarPanel.innerHTML = linksHtml;
-        }
-
+        // Render sidebar links
+        sidebarPanel.innerHTML = refs.length ? linksHtml : '<em>No cross-references found.</em>';
       } catch (err) {
         crossrefPanel.innerHTML = '<em>Error loading cross-references.</em>';
         sidebarPanel.innerHTML = '<em>Error loading cross-references.</em>';
       }
+      return;
     }
 
-    // Handle click on cross-reference link (event delegation)
+    // Cross-reference link click (within ref-list-area)
     if (e.target.matches('.xref-link')) {
       e.preventDefault();
       const ref = e.target.dataset.ref;
-      // Find the nearest .ref-list-area (works for both sidebar and main panel)
       const refArea = e.target.closest('.ref-list-area');
       let verseArea = refArea.querySelector('.xref-verse-area');
       if (!verseArea) {
@@ -533,41 +439,48 @@ window.addEventListener('DOMContentLoaded', async () => {
       }
       verseArea.textContent = 'Loading…';
       try {
-        const verseRes = await fetch(`${API_BASE}/search?module=KJV&query=${encodeURIComponent(ref)}&output_format=plain&output_encoding=UTF8&variant=0&locale=en`);
-        const verseData = await verseRes.json();
-        verseArea.textContent = verseData.result || 'Not found.';
+        const bibleId = document.getElementById('bible-select').value;
+        const res = await fetch(`${API_BASE}/search?module=${bibleId}&query=${encodeURIComponent(ref)}&output_format=plain&output_encoding=UTF8&variant=0&locale=en`);
+        const data = await res.json();
+        verseArea.textContent = data.result || 'Not found.';
       } catch (err) {
         verseArea.textContent = 'Error loading verse.';
       }
     }
   });
-});
+}
 
-// Delegate clicks on phrase-search links
-document.addEventListener('click', async e => {
-  if (!e.target.matches('.phrase-xref')) return;
-  e.preventDefault();
-
-  const ref    = e.target.dataset.ref;
-  const verseEl = document.querySelector('.phrase-verse-area');
-  verseEl.textContent = 'Loading…';
-
+// ----- Initialization on DOM Ready -----
+window.addEventListener('DOMContentLoaded', async () => {
   try {
-    const bibleId = document.getElementById('bible-select').value;
-    const verseUrl = `${API_BASE}/search?module=KJV`
-                   + `&query=${encodeURIComponent(ref)}`
-                   + `&output_format=plain`
-                   + `&output_encoding=UTF8`
-                   + `&variant=0`
-                   + `&locale=en`;
+    // Load all dropdown data
+    const [biblesData, bookSetsData, layoutData] = await Promise.all([
+      loadJSON('books/bibles.json'),
+      loadJSON('books/book_sets.json'),
+      loadJSON('books/bibles_layout.json')
+    ]);
+    bibles = biblesData.bibles;
+    layout = layoutData.layout;
+    bookSetsData.book_sets.forEach(set => {
+      bookSets[set.set_id] = set.books;
+    });
 
-    const verseRes  = await fetch(verseUrl);
-    if (!verseRes.ok) throw new Error(verseRes.status);
-    const verseData = await verseRes.json();
+    // Populate dropdowns
+    populateBibleDropdown();
+    populateBookDropdown();
 
-    verseEl.textContent = verseData.result || 'Not found.';
+    // Event listeners for controls
+    document.getElementById('bible-select').addEventListener('change', populateBookDropdown);
+    document.getElementById('load-btn').addEventListener('click', () => {
+      displayChapter();
+    });
+
+    // Phrase search button
+    document.querySelector('.btn-search').addEventListener('click', handlePhraseSearch);
+
+    // Initialize cross-reference delegation
+    initializeCrossReferenceDelegation();
   } catch (err) {
-    verseEl.textContent = 'Error loading verse.';
+    console.error('Initialization error:', err);
   }
 });
-
