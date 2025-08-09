@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Key of King David — Advanced Study</title>
+
+  <!-- KaTeX (your API emits LaTeX-ish markup; we don’t render math, but keep parity) -->
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css"
+        crossorigin="anonymous" />
+  <script defer
+        src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js"
+        crossorigin="anonymous"></script>
+
+  <!-- Reuse your styles -->
+  <link rel="stylesheet" href="./css/advanced.css" />
+  <link rel="stylesheet" href="./css/tools.css" />
+
+  <style>
+    /* Tiny extras just for this page */
+    .adv-wrap { display: grid; grid-template-columns: 2.2fr 1fr; gap: var(--spacing); }
+    .adv-controls { display: grid; grid-template-columns: 1fr auto; gap: .75rem; align-items: center; }
+    .adv-controls .row { display:flex; gap:.5rem; align-items:center; }
+    .result-list { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .5rem; }
+    .result-list a { text-decoration: none; padding: .15rem .4rem; border-radius: .375rem; border: 1px solid #e5e7eb; }
+    .viewer { background: #fff; border-radius: var(--radius); box-shadow: 0 2px 6px rgba(0,0,0,.08); padding: 1rem; min-height: 8rem; }
+    .lexicon { background:#fff; border-radius: var(--radius); box-shadow: 0 2px 6px rgba(0,0,0,.08); padding: 1rem; min-height: 8rem; }
+    .lex-entry .strongs-number { font-weight: 700; margin-right:.5rem; }
+    .strong-number { font-size: 0.72em; vertical-align: super; color:#444; cursor:pointer; }
+    .adv-muted { color:#6b7280; }
+    .adv-label { font-weight:600; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Key of King David — Advanced/Deep Study</h1>
+  </header>
+
+  <main class="adv-wrap" id="advanced">
+    <!-- Left: inspiration → results → verse viewer -->
+    <section>
+      <div class="panel">
+        <div class="adv-controls">
+          <div class="row">
+            <label class="adv-label" for="adv-version">Version (Strong’s only):</label>
+            <select id="adv-version" aria-label="Bible version for search & display"></select>
+          </div>
+          <button id="adv-clear" type="button" title="Clear">Clear</button>
+        </div>
+
+        <div style="margin-top:.75rem">
+          <label for="adv-words" class="adv-label">Inspiration words</label>
+          <div class="input-group" style="margin-top:.35rem">
+            <input id="adv-words" type="text" placeholder="e.g., light truth love"
+                   aria-label="Type words or a phrase to search" />
+            <button id="adv-search" class="btn-search" type="button">Search</button>
+          </div>
+          <p class="adv-muted" style="margin:.4rem 0 0">
+            Tip: Use a phrase (quotes not required). Results are clickable.
+          </p>
+          <div id="adv-results" class="result-list" style="margin-top:.5rem">
+            <em>No search yet.</em>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="row" style="justify-content:space-between;">
+          <h3 style="margin:0">Verse Viewer</h3>
+          <small id="adv-current-ref" class="adv-muted"></small>
+        </div>
+        <div id="adv-viewer" class="viewer">Select a verse from the search results.</div>
+      </div>
+    </section>
+
+    <!-- Right: lexicon/glosses -->
+    <aside>
+      <div class="panel">
+        <h3 style="margin:0">Lexicon (click any Strong’s tag)</h3>
+        <div id="adv-lexicon" class="lexicon">
+          <em>Click a <span class="strong-number">H/G####</span> in the verse.</em>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <p class="adv-muted">© Key of King David</p>
+  </footer>
+
+  <script src="./js/advanced.js"></script>
+</body>
+</html>

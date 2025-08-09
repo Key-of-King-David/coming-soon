@@ -1,0 +1,115 @@
+/* css/advanced.css */
+
+/* — Fonts (same as app) — */
+@font-face { font-family: 'SBL Hebrew'; src: url('../fonts/SBL_Hbrw.ttf') format('truetype'); }
+@font-face { font-family: 'SBL Greek';  src: url('../fonts/SBL_grk.ttf')  format('truetype'); }
+@font-face { font-family: 'SBL Latin';  src: url('../fonts/SBL_BLit.ttf') format('truetype'); }
+
+/* — Root variables (copied from app) — */
+:root{
+  --color-header-from:#0A0E1A; --color-header-to:#131B2D;
+  --color-bg:#fff; --color-text:#333; --color-primary:#435a72; --color-hover:#f83e3e;
+  --color-highlight-bg:rgba(0,0,0,0.9); --color-secondary-text:#555;
+  --font-base:'Segoe UI', Tahoma, Geneva, sans-serif;
+  --font-logo:ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --radius:12px; --spacing:1rem; --container:1200px;
+}
+
+/* — Reset — */
+*{box-sizing:border-box;margin:0;padding:0}
+
+/* — Page base (scrollable) — */
+html,body{height:100%}
+body{
+  font-family:var(--font-base);
+  background:var(--color-bg);
+  color:var(--color-text);
+  line-height:1.55;
+}
+
+/* — Header (sticky, not fixed) — */
+header{
+  position:sticky; top:0; z-index:10;
+  background:linear-gradient(to bottom,var(--color-header-from),var(--color-header-to));
+  padding:1rem;
+}
+header h1{
+  font-family:var(--font-logo);
+  color:#fff; text-align:center; font-weight:500; letter-spacing:.2px;
+}
+
+/* — Layout — */
+#advanced{max-width:var(--container); margin:1.25rem auto; padding:0 var(--spacing);}
+.adv-wrap{display:grid; grid-template-columns:2.2fr 1fr; gap:var(--spacing);}
+@media (max-width: 960px){ .adv-wrap{grid-template-columns:1fr} }
+
+/* — Panels / cards — */
+.panel{
+  background:#fff; border-radius:var(--radius);
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+  padding:calc(var(--spacing)*1);
+}
+.panel h3{margin-bottom:.5rem}
+
+/* — Controls — */
+.adv-controls{display:grid; grid-template-columns:1fr auto; gap:.75rem; align-items:center}
+.adv-controls .row{display:flex; gap:.5rem; align-items:center}
+input,select,button{
+  font:inherit; border:1px solid #d1d5db; border-radius:10px; padding:.55rem .7rem;
+}
+button{background:var(--color-primary); color:#fff; border:none; cursor:pointer}
+button:hover{opacity:.95}
+
+/* — Search results — */
+.result-list{display:flex; flex-wrap:wrap; gap:.5rem; margin-top:.5rem}
+.result-list a{
+  text-decoration:none; padding:.25rem .55rem; border:1px solid #e5e7eb;
+  border-radius:.6rem; line-height:1.25rem;
+}
+.result-list a:hover{background:#f3f4f6}
+
+/* — Viewer / Lexicon — */
+.viewer,.lexicon{
+  background:#fff; border-radius:var(--radius);
+  box-shadow:0 2px 6px rgba(0,0,0,.08);
+  padding:1rem; min-height:8rem;
+}
+#adv-current-ref{color:#6b7280}
+
+/* — Scripture text — */
+.scripture p{margin:.4rem 0; font-size:1.1rem}
+.scripture sup{font-size:.72em; vertical-align:super; margin-right:.25em; color:#555}
+.divine-name{font-variant:small-caps; font-weight:550}
+
+/* — Strong’s tags — */
+.strong-number{
+  font-size:.72em; vertical-align:super; color:#374151; cursor:pointer;
+  transition:background-color .15s ease,color .15s ease; padding:0 .15rem; border-radius:4px;
+}
+.strong-number:hover{background:#eef2ff; color:#1f2937}
+
+/* — Lexicon entry — */
+.lex-entry{line-height:1.45}
+.lex-entry .strongs-number{font-weight:700; margin-right:.35rem}
+.lex-entry em{color:#6b7280}
+.lex-def{margin-top:.5rem; white-space:pre-wrap; color:#444}
+
+/* — Utility — */
+.adv-muted{color:#6b7280}
+.error{color:#c00; font-style:italic}
+
+/* — Language fonts — */
+.scripture.hebrew{font-family:'SBL Hebrew', serif; direction:rtl}
+.scripture.greek{font-family:'SBL Greek', serif}
+.scripture.latin,.scripture.english{font-family:'SBL Latin', serif}
+
+/* — Focus — */
+:focus-visible{outline:3px solid var(--color-primary); outline-offset:2px}
+
+/* Hard overrides if styles.css is also loaded */
+body{overflow:auto !important}
+header, .controls, .sidebar, .content{position:static !important; left:auto !important; right:auto !important; top:auto !important; bottom:auto !important; width:auto !important; height:auto !important;}
+
+
+.hg-pairs { margin:.4rem 0 0; padding-left:1rem }
+.hg-pairs li { margin:.15rem 0 }
